@@ -1,0 +1,21 @@
+{
+  "all": true,
+  "include": [
+    "dist/**/*.js"
+  ],
+  "exclude": [],
+  "reporter": [
+    "text",
+    "json-summary",
+    "lcov"
+  ],
+  "check-coverage": true,
+  "lines": 100,
+  "branches": 100,
+  "functions": 100,
+  "statements": 100,
+  "src": [
+    "dist"
+  ],
+  "exclude-after-remap": true
+}

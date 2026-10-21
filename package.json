@@ -7,8 +7,10 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./fixtures/*": "./fixtures/*"
   },
   "files": [
     "dist",
@@ -27,12 +29,13 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json && tsc -p tsconfig.types.json",
     "test": "npm run build && c8 node --test test/*.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
     "lint": "eslint .",
     "check": "npm run lint && npm run typecheck && npm test",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "check:pack": "node scripts/check-pack.mjs"
   },
   "peerDependencies": {
     "zod": "^4.6.0"
@@ -44,34 +47,12 @@
     "typescript-eslint": "^8.0.0",
     "zod": "4.6.7"
   },
-  "c8": {
-    "all": true,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "exclude": [],
-    "reporter": [
-      "text",
-      "json-summary",
-      "lcov"
-    ],
-    "check-coverage": true,
-    "lines": 100,
-    "branches": 100,
-    "functions": 100,
-    "statements": 100,
-    "src": [
-      "src",
-      "dist"
-    ],
-    "exclude-after-remap": true
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "unicode-segmenter": "0.17.3"
   },
   "homepage": "https://github.com/Papersync/scan-format#readme",
   "bugs": {
     "url": "https://github.com/Papersync/scan-format/issues"
-  },
-  "dependencies": {
-    "unicode-segmenter": "0.17.3"
   }
 }

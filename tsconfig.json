@@ -11,8 +11,15 @@
     "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": false,
-    "sourceMap": true,
-    "inlineSources": true
+    "sourceMap": false,
+    "inlineSources": false,
+    "lib": [
+      "ES2022",
+      "ES2022.Intl",
+      "DOM"
+    ],
+    "types": [],
+    "isolatedDeclarations": true
   },
   "include": [
     "src/**/*.ts"
