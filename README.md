@@ -1,6 +1,15 @@
 # @papersync/scan-format
 
-The shared scan file contract for Papersync and the Papersync Obsidian plugin. A scan is a `<name>.json` document and an image in the same folder.
+[![npm](https://img.shields.io/npm/v/@papersync/scan-format?label=npm&color=7786c4)](https://www.npmjs.com/package/@papersync/scan-format)
+[![CI](https://github.com/Papersync/scan-format/actions/workflows/ci.yml/badge.svg)](https://github.com/Papersync/scan-format/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Papersync/scan-format/actions/workflows/codeql.yml/badge.svg)](https://github.com/Papersync/scan-format/actions/workflows/codeql.yml)
+[![coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/Papersync/scan-format/actions/workflows/ci.yml)
+[![provenance](https://img.shields.io/badge/npm-provenance-7786c4)](https://www.npmjs.com/package/@papersync/scan-format#provenance)
+[![types](https://img.shields.io/npm/types/@papersync/scan-format)](https://www.npmjs.com/package/@papersync/scan-format)
+[![node](https://img.shields.io/node/v/@papersync/scan-format)](https://www.npmjs.com/package/@papersync/scan-format)
+[![license MIT](https://img.shields.io/npm/l/@papersync/scan-format)](LICENSE)
+
+The shared scan file contract for Papersync and the Papersync Obsidian plugin. A scan is a `<name>.json` document and an image in the same folder. Published on npm as [`@papersync/scan-format`](https://www.npmjs.com/package/@papersync/scan-format).
 
 ```sh
 npm install @papersync/scan-format zod
