@@ -2,72 +2,216 @@
   {
     "file": "valid/minimal-v1.json",
     "expected": "ok",
-    "reason": "All seven v1 fields; no optional metadata."
+    "reason": "All eight required v1 fields; no optional metadata.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/title-summary.json",
     "expected": "ok",
-    "reason": "Metadata is trimmed on read."
+    "reason": "Metadata is trimmed on read.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72,
+      "title": "A paper note",
+      "summary": "Keep this scan."
+    }
   },
   {
     "file": "valid/string-version.json",
     "expected": "ok",
-    "reason": "String v1 normalizes to number 1."
+    "reason": "String v1 normalizes to number 1.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/synced-true.json",
     "expected": "ok",
-    "reason": "Plugin bookkeeping may mark a scan as synced."
+    "reason": "Boolean synced values are preserved.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": true,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/synced-false.json",
     "expected": "ok",
-    "reason": "Explicit false is accepted."
+    "reason": "Explicit false is accepted.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/png-image.json",
     "expected": "ok",
-    "reason": "PNG images are supported."
+    "reason": "PNG images are supported.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.png",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/jpeg-image.json",
     "expected": "ok",
-    "reason": "JPEG long extension is supported."
+    "reason": "JPEG long extension is supported.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpeg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/unknown-key.json",
     "expected": "ok",
-    "reason": "Unknown keys are stripped on read."
+    "reason": "Unknown keys are stripped on read.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/future-provider.json",
     "expected": "ok",
-    "reason": "Provider names stay open to newer writers."
+    "reason": "Provider names stay open to newer writers.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/empty-metadata.json",
     "expected": "ok",
-    "reason": "Blank optional metadata becomes absent."
+    "reason": "Blank optional metadata becomes absent.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/long-metadata.json",
     "expected": "ok",
-    "reason": "Reader never rejects metadata for length."
+    "reason": "Reader never rejects metadata for length.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72,
+      "title": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+      "summary": "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+    }
   },
   {
     "file": "valid/empty-content.json",
     "expected": "ok",
-    "reason": "These strings remain unconstrained for v1 compatibility."
+    "reason": "These strings remain unconstrained for v1 compatibility.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "",
+      "provider": "example-provider",
+      "model": "",
+      "imageFileName": "",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/confidence-zero.json",
     "expected": "ok",
-    "reason": "Inclusive lower confidence bound."
+    "reason": "Inclusive lower confidence bound.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 0
+    }
   },
   {
     "file": "valid/confidence-hundred.json",
     "expected": "ok",
-    "reason": "Inclusive upper confidence bound."
+    "reason": "Inclusive upper confidence bound.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 100
+    }
   },
   {
     "file": "invalid/bad-created-at.json",
@@ -82,7 +226,7 @@
   {
     "file": "invalid/offset-datetime.json",
     "expected": "schema",
-    "reason": "Matches the plugin UTC-only z.iso.datetime rule."
+    "reason": "createdAt requires an uppercase Z suffix; numeric offsets are rejected."
   },
   {
     "file": "invalid/impossible-date.json",
@@ -93,7 +237,14 @@
     "file": "valid/confidence-101.json",
     "expected": "ok",
     "reason": "Finite confidence above 100 is clamped to 100.",
-    "normalized": {
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
       "confidence": 100
     }
   },
@@ -101,7 +252,14 @@
     "file": "valid/confidence-fraction.json",
     "expected": "ok",
     "reason": "Finite decimal confidence is rounded from 72.5 to 73.",
-    "normalized": {
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
       "confidence": 73
     }
   },
@@ -109,7 +267,14 @@
     "file": "valid/confidence-negative.json",
     "expected": "ok",
     "reason": "Finite negative confidence is clamped to 0.",
-    "normalized": {
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
       "confidence": 0
     }
   },
@@ -124,25 +289,49 @@
     "reason": "Whitespace is not a provider name."
   },
   {
-    "file": "invalid/bad-synced.json",
-    "expected": "schema",
-    "reason": "Bookkeeping must be boolean when present."
+    "file": "valid/non-boolean-synced.json",
+    "expected": "ok",
+    "reason": "Non-boolean synced values normalize to false.",
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/bad-title.json",
     "expected": "ok",
     "reason": "Non-string optional title is ignored; the scan remains readable.",
-    "absent": [
-      "title"
-    ]
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "valid/null-summary.json",
     "expected": "ok",
     "reason": "Null optional summary is ignored; the scan remains readable.",
-    "absent": [
-      "summary"
-    ]
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "invalid/version-2.json",
@@ -156,7 +345,7 @@
   },
   {
     "file": "invalid/noncanonical-version.json",
-    "expected": "unsupported_version",
+    "expected": "schema",
     "reason": "Only exact 1 or string 1 identifies v1."
   },
   {
@@ -178,7 +367,14 @@
     "file": "valid/confidence-tenths.json",
     "expected": "ok",
     "reason": "Fractional confidence 0.9 is normalized to 90.",
-    "normalized": {
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
       "confidence": 90
     }
   },
@@ -186,7 +382,14 @@
     "file": "valid/confidence-one.json",
     "expected": "ok",
     "reason": "Exactly 1 is a percentage, not a fraction.",
-    "normalized": {
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
       "confidence": 1
     }
   },
@@ -194,10 +397,16 @@
     "file": "valid/non-string-metadata.json",
     "expected": "ok",
     "reason": "Object and array optional metadata are ignored.",
-    "absent": [
-      "title",
-      "summary"
-    ]
+    "output": {
+      "createdAt": "2026-10-21T10:30:00.000Z",
+      "markdown": "# A paper note\n\nKeep this scan.",
+      "provider": "example-provider",
+      "model": "example-model",
+      "imageFileName": "scan.jpg",
+      "version": 1,
+      "synced": false,
+      "confidence": 72
+    }
   },
   {
     "file": "invalid/confidence-string.json",

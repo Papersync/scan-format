@@ -2,31 +2,27 @@ import type { ScanFile } from "./schema.js";
 
 export const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"] as const;
 
-/** Extension match is case-sensitive. */
+/** A plain basename with a nonempty stem and a case-sensitive image extension. */
 export function isScanImageFileName(name: string): boolean {
-  return IMAGE_EXTENSIONS.some((extension) => name.endsWith(extension));
+  return !/[\\/\p{Cc}:]/u.test(name) && !name.includes("..") &&
+    IMAGE_EXTENSIONS.some((extension) => name.length > extension.length && name.endsWith(extension));
 }
 
-/** Remove only a trailing scan extension; names, not paths, are expected. */
+/** Remove only one trailing, case-sensitive scan extension. */
 export function scanBaseName(fileName: string): string {
   return fileName.replace(/\.(?:json|jpg|jpeg|png)$/, "");
 }
 
-export interface ImagePairingOptions {
-  jsonFileName: string;
-  availableFileNames: readonly string[];
-}
-
-/** Prefer `imageFileName`; with a folder listing, fall back to a same-name image. */
+/** Prefer a safe explicit name; with a listing, try .jpg, .jpeg, then .png. */
 export function imageFileNameFor(
   file: Pick<ScanFile, "imageFileName">,
-  options?: ImagePairingOptions,
+  options?: { jsonFileName: string; availableFileNames: readonly string[] },
 ): string | undefined {
-  if (file.imageFileName && (!options || options.availableFileNames.includes(file.imageFileName))) {
+  if (isScanImageFileName(file.imageFileName) && (!options || options.availableFileNames.includes(file.imageFileName))) {
     return file.imageFileName;
   }
   if (!options) return undefined;
   const base = scanBaseName(options.jsonFileName);
   return IMAGE_EXTENSIONS.map((extension) => `${base}${extension}`)
-    .find((candidate) => options.availableFileNames.includes(candidate));
+    .find((candidate) => isScanImageFileName(candidate) && options.availableFileNames.includes(candidate));
 }

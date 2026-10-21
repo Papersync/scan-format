@@ -26,3 +26,27 @@ test("pairing prefers the explicit name, including a different base, and can pro
   assert.equal(imageFileNameFor({ imageFileName: "" }, { ...options, availableFileNames: [] }), undefined);
   assert.equal(imageFileNameFor({ imageFileName: "missing.png" }, { ...options, availableFileNames: ["scanner.jpg", "scan-thumb.jpg"] }), undefined);
 });
+
+test("pairing never selects unsafe names, even when they appear in a listing", () => {
+  for (const base of ["../a", "a/b", "a\\b", "/a", "C:a", "https:a", "a..b", "a\0b", ""]) {
+    for (const extension of IMAGE_EXTENSIONS) {
+      const imageFileName = base + extension;
+      assert.equal(isScanImageFileName(imageFileName), false);
+      assert.equal(imageFileNameFor({ imageFileName }, { jsonFileName: base + ".json", availableFileNames: [imageFileName] }), undefined);
+    }
+  }
+  assert.equal(imageFileNameFor({ imageFileName: "scan.json" }, { jsonFileName: "scan.json", availableFileNames: ["scan.json", "scan.jpg"] }), "scan.jpg");
+});
+
+test("generated listing combinations preserve membership and deterministic precedence", () => {
+  const candidates = ["scan.jpg", "scan.jpeg", "scan.png", "other.png"];
+  for (let mask = 0; mask < 16; mask++) {
+    const availableFileNames = candidates.filter((_, i) => mask & (1 << i)).reverse();
+    for (const imageFileName of [...candidates, "", "../scan.jpg"]) {
+      const selected = imageFileNameFor({ imageFileName }, { jsonFileName: "scan.json", availableFileNames });
+      const expected = availableFileNames.includes(imageFileName) ? imageFileName : candidates.slice(0, 3).find((candidate) => availableFileNames.includes(candidate));
+      assert.equal(selected, expected);
+      if (selected) assert.ok(availableFileNames.includes(selected) && isScanImageFileName(selected));
+    }
+  }
+});

@@ -1,54 +1,81 @@
 import * as z from "zod";
+import { SCAN_FILE_VERSION } from "./constants.js";
+import { isScanImageFileName } from "./images.js";
+import { clampText } from "./text.js";
 
-export const SCAN_FILE_VERSION = 1;
-export const SUPPORTED_SCAN_FILE_VERSIONS = [SCAN_FILE_VERSION] as const;
+/** Normalized scan document. Unknown fields are not retained. */
+export interface ScanFile {
+  version: 1;
+  createdAt: string;
+  markdown: string;
+  /** Integer in [0, 100]. */
+  confidence: number;
+  provider: string;
+  model: string;
+  /** Safe image basename, or an empty string when the reference is unusable. */
+  imageFileName: string;
+  synced: boolean;
+  title?: string | undefined;
+  summary?: string | undefined;
+}
+
+/** Writer input; confidence uses the same normalization as the reader. */
+export interface CreateScanFileInput {
+  createdAt: Date | string;
+  markdown: string;
+  confidence: number;
+  provider: string;
+  model: string;
+  imageFileName: string;
+  title?: string | undefined;
+  summary?: string | undefined;
+}
+
+export type ParseScanFileResult =
+  | { ok: true; file: ScanFile }
+  | { ok: false; kind: "schema" | "unsupported_version"; message: string };
 
 const text = () => z.string({ error: "Must be a string" });
 const writerOptionalText = text().trim().transform((value) => value || undefined).optional();
-// Display metadata must never make an otherwise readable scan disappear.
 const optionalText = z.preprocess(
   (value) => typeof value === "string" ? value : undefined,
   writerOptionalText,
 );
 
-/** Read boundary: normalize v1, strip unknown keys, retain unbounded metadata. */
-export const scanFileSchema = z.object({
+const scanFileSchema = z.object({
   version: z.union([z.literal(1), z.literal("1")], {
     error: 'Must be 1 or "1"',
   }).transform((): typeof SCAN_FILE_VERSION => SCAN_FILE_VERSION),
   createdAt: z.iso.datetime({ error: "Must be a valid ISO datetime in UTC" }),
   markdown: text(),
   confidence: z.number({ error: "Must be a finite number" }).transform((value) => {
-    // A value between 0 and 1 is a fraction of 100.
-    const percent = value > 0 && value < 1 ? value * 100 : value;
+    // Decimal rounding removes multiplication noise at percentage half-points.
+    const percent = value > 0 && value < 1 ? Number((value * 100).toPrecision(15)) : value;
     return Math.round(Math.max(0, Math.min(100, percent)));
   }),
   provider: text().refine((value) => value.trim().length > 0, {
     error: "Must be a non-empty provider name",
   }),
   model: text(),
-  imageFileName: text(),
-  synced: z.boolean({ error: "Must be a boolean" }).default(false),
+  imageFileName: text().transform((value) => isScanImageFileName(value) ? value : ""),
+  synced: z.unknown().optional().transform((value) => value === true),
   title: optionalText,
   summary: optionalText,
 }, { error: "Must be an object" });
 
-export type ScanFile = z.infer<typeof scanFileSchema>;
-export type ParseScanFileResult =
-  | { ok: true; file: ScanFile }
-  | { ok: false; kind: "schema" | "unsupported_version"; message: string };
+const versionEnvelope = z.object({
+  version: z.union([z.number().int().min(1).max(999999999), z.string().regex(/^[1-9]\d{0,8}$/)]),
+}).passthrough();
 
-// A recognizable unknown version takes precedence over other field errors.
-// Missing or non-string/non-number versions remain schema errors.
-const versionEnvelope = z.object({ version: z.union([z.string(), z.number()]) });
-
+/** Validate decoded JSON; malformed versions and unrelated objects are schema errors. */
 export function parseScanFile(raw: unknown): ParseScanFileResult {
   const envelope = versionEnvelope.safeParse(raw);
-  if (envelope.success && envelope.data.version !== 1 && envelope.data.version !== "1") {
+  if (envelope.success && Number(envelope.data.version) !== SCAN_FILE_VERSION &&
+      (typeof envelope.data.markdown === "string" || typeof envelope.data.createdAt === "string")) {
     return {
       ok: false,
       kind: "unsupported_version",
-      message: `Unsupported Papersync scan version ${JSON.stringify(envelope.data.version)}. Update the Papersync reader.`,
+      message: `Unsupported Papersync scan version ${Number(envelope.data.version)}.`,
     };
   }
   const result = scanFileSchema.safeParse(raw);
@@ -64,32 +91,14 @@ export function parseScanFile(raw: unknown): ParseScanFileResult {
   return { ok: true, file: result.data };
 }
 
-// Writers retain typed string metadata; only readers tolerate malformed extras.
 const scanFileWriteSchema = scanFileSchema.omit({ synced: true }).extend({
+  imageFileName: text().refine(isScanImageFileName, { error: "Must be a plain .jpg, .jpeg or .png basename" }),
   title: writerOptionalText,
   summary: writerOptionalText,
 });
 
-export type CreateScanFileInput = Omit<z.input<typeof scanFileWriteSchema>, "version" | "createdAt"> & {
-  createdAt: Date | string;
-};
-/** Writer output omits reader-only bookkeeping, including its default. */
-export type ScanFileWrite = Omit<ScanFile, "synced">;
-
-function clampText(value: string | undefined, limit: number): string | undefined {
-  const trimmed = value?.trim();
-  if (!trimmed) return undefined;
-  // Count Unicode code points so a cut cannot leave half a surrogate pair.
-  const characters = Array.from(trimmed);
-  if (characters.length <= limit) return trimmed;
-  const prefix = characters.slice(0, limit - 1).join("");
-  // If the cut falls inside a word, remove the partial word when possible.
-  const boundary = /\s/.test(characters[limit - 1]!) ? prefix : prefix.replace(/\s+\S*$/, "");
-  return `${boundary.trimEnd()}…`;
-}
-
-export function createScanFile(input: CreateScanFileInput): ScanFileWrite {
-  // The shared confidence transform validates and normalizes reads and writes.
+/** Create numeric v1 output, omit synced, and cap title/summary at 80/200 code points. */
+export function createScanFile(input: CreateScanFileInput): Omit<ScanFile, "synced"> {
   const parsed = scanFileWriteSchema.parse({
     ...input,
     version: SCAN_FILE_VERSION,
@@ -97,7 +106,6 @@ export function createScanFile(input: CreateScanFileInput): ScanFileWrite {
   });
   parsed.title = clampText(parsed.title, 80);
   parsed.summary = clampText(parsed.summary, 200);
-  // Absent optional metadata stays absent even before JSON.stringify.
   if (parsed.title === undefined) delete parsed.title;
   if (parsed.summary === undefined) delete parsed.summary;
   return parsed;

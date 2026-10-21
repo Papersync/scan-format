@@ -1,7 +1,7 @@
 {
   "name": "@papersync/scan-format",
-  "version": "0.1.0",
-  "description": "Shared Papersync scan file validation, creation, pairing, and display helpers.",
+  "version": "0.2.0",
+  "description": "The shared Papersync scan file contract.",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -18,7 +18,10 @@
     "node": ">=20"
   },
   "license": "MIT",
-  "repository": "github:papersync/scan-format",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Papersync/scan-format.git"
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
@@ -35,11 +38,11 @@
     "zod": "^4.6.0"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "zod": "4.6.7",
+    "c8": "^10.1.3",
     "eslint": "^9.39.0",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.0.0",
-    "c8": "^10.1.3"
+    "zod": "4.6.7"
   },
   "c8": {
     "all": true,
@@ -63,5 +66,12 @@
       "dist"
     ],
     "exclude-after-remap": true
+  },
+  "homepage": "https://github.com/Papersync/scan-format#readme",
+  "bugs": {
+    "url": "https://github.com/Papersync/scan-format/issues"
+  },
+  "dependencies": {
+    "unicode-segmenter": "0.17.3"
   }
 }
