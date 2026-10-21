@@ -33,14 +33,14 @@ jobs:
       - run: npm run check
       - run: npm run check:pack
       - name: Prepare pinned publishing CLI
-        run: npm pack npm@11.9.0 --ignore-scripts --pack-destination .pack
+        run: npm pack npm@12.2.0 --ignore-scripts --pack-destination .pack
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         id: artifact
         with:
           name: release-package
           path: |
             .pack/papersync-scan-format-*.tgz
-            .pack/npm-11.9.0.tgz
+            .pack/npm-12.2.0.tgz
             .pack/SHA256SUMS
           if-no-files-found: error
           include-hidden-files: true
@@ -54,7 +54,7 @@ jobs:
       actions: read
       id-token: write
     steps:
-      - name: Verify and publish the built tarball
+      - name: Verify and stage the built tarball for approval
         env:
           ARTIFACT_ID: ${{ needs.build.outputs.artifact-id }}
           ARTIFACT_DIGEST: ${{ needs.build.outputs.artifact-digest }}
@@ -64,6 +64,7 @@ jobs:
           set -euo pipefail
           NODE_BIN=$(find "$RUNNER_TOOL_CACHE/node" -path '*/24.*/x64/bin/node' -type f | sort -V | tail -n 1)
           test -n "$NODE_BIN" || { echo 'Node 24 is required in the runner tool cache'; exit 1; }
+          "$NODE_BIN" -e 'const [major, minor] = process.versions.node.split(".").map(Number); if (major !== 24 || minor < 15) throw new Error("npm 12.2.0 requires Node 24.15.0 or later on the Node 24 line");'
           artifact_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"
           curl --fail --silent --show-error -H "Authorization: Bearer $GH_TOKEN" "$artifact_url" --dump-header "$RUNNER_TEMP/artifact-headers" --output /dev/null
           artifact_location=$(tr -d '\r' < "$RUNNER_TEMP/artifact-headers" | sed -n 's/^[Ll]ocation: //p')
@@ -74,5 +75,5 @@ jobs:
           unzip -q "$RUNNER_TEMP/release.zip" -d "$RUNNER_TEMP/release"
           cd "$RUNNER_TEMP/release"
           sha256sum --check --strict SHA256SUMS
-          tar -xzf npm-11.9.0.tgz -C "$RUNNER_TEMP/npm-cli"
-          "$NODE_BIN" "$RUNNER_TEMP/npm-cli/package/bin/npm-cli.js" publish ./papersync-scan-format-*.tgz --ignore-scripts --provenance --access public
+          tar -xzf npm-12.2.0.tgz -C "$RUNNER_TEMP/npm-cli"
+          "$NODE_BIN" "$RUNNER_TEMP/npm-cli/package/bin/npm-cli.js" stage publish ./papersync-scan-format-*.tgz --ignore-scripts --provenance --access public
