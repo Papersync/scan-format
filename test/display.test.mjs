@@ -24,7 +24,7 @@ for (const [markdown, expected] of [
   ["[my_link](https://example.test/a_b)", "my_link"], ["my_file_name.txt", "my_file_name.txt"],
   ["2 * 3 * 4 = 24", "2 * 3 * 4 = 24"], ["`a_b_c` and `**alpha**`", "a_b_c and **alpha**"],
   ["``a ` b``", "a ` b"], ["`unclosed", "`unclosed"], ["`one` `two`", "one two"],
-  ["\\*escaped\\*", "*escaped*"], ["alpha\\", "alpha\\"],
+  ["\\*escaped\\*", "*escaped*"], ["alpha\\", "alpha\\"], ["alpha\\beta", "alpha\\beta"],
   ["> - [ ] alpha", "alpha"], ["> > * [x] beta", "beta"], ["1. [ ] alpha", "alpha"],
   ["- [ ]", "fallback"], ["***", "fallback"], ["- [>] alpha", "alpha"], ["- [-] beta", "beta"],
   ["_alpha_", "alpha"], ["_alpha_ _beta_", "alpha beta"], ["* alpha", "alpha"],

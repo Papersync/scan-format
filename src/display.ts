@@ -33,7 +33,7 @@ function cleanInline(line: string): string {
   const labelEnds = new Map<number, number>();
   for (let i = 0; i < line.length; i++) {
     const char = line[i]!;
-    if (char === "\\" && i + 1 < line.length) {
+    if (char === "\\" && i + 1 < line.length && "\\`*_{}[]()#+-.!>~|".includes(line[i + 1]!)) {
       tokens.push({ text: line[++i]!, literal: true });
       continue;
     }
