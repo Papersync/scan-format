@@ -9,6 +9,8 @@ Please report security problems privately, not in a public issue:
 
 You will get a reply within 7 days.
 
+Reports may include parser denial of service, unsafe image references, or validation failures that violate the documented contract.
+
 ## Supported versions
 
 Only the latest release receives security fixes.

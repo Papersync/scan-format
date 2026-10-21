@@ -1,111 +1,95 @@
 # @papersync/scan-format
 
-[![npm](https://img.shields.io/npm/v/@papersync/scan-format?label=npm&color=7786c4)](https://www.npmjs.com/package/@papersync/scan-format)
-[![CI](https://github.com/Papersync/scan-format/actions/workflows/ci.yml/badge.svg)](https://github.com/Papersync/scan-format/actions/workflows/ci.yml)
-[![coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/Papersync/scan-format/actions/workflows/ci.yml)
-[![types](https://img.shields.io/npm/types/@papersync/scan-format)](https://www.npmjs.com/package/@papersync/scan-format)
-[![node](https://img.shields.io/node/v/@papersync/scan-format)](https://www.npmjs.com/package/@papersync/scan-format)
-[![license MIT](https://img.shields.io/npm/l/@papersync/scan-format)](LICENSE)
-
-The scan file format shared by the Papersync app and the Papersync Obsidian plugin.
-
-A scan is a `<name>.json` file plus its image, saved to Google Drive, a folder, or iCloud.
-
-## Install
+The shared scan file contract for Papersync and the Papersync Obsidian plugin. A scan is a `<name>.json` document and an image in the same folder.
 
 ```sh
-npm i @papersync/scan-format zod
+npm install @papersync/scan-format zod
 ```
 
-ESM only. Node 20+. Zod `^4.6.0` is a peer dependency.
+ESM, Node >=20, Zod ^4.6.0. TypeScript supports NodeNext and Bundler resolution. Text truncation uses pinned Unicode grapheme rules and does not require `Intl.Segmenter`. No CommonJS build is provided.
 
-## Usage
-
-```js
+```ts
 import { createScanFile, parseScanFile, scanTitle } from "@papersync/scan-format";
 
-// Write
 const file = createScanFile({
   createdAt: new Date(),
-  markdown: "# Meeting notes",
+  markdown: "# A paper note\n\nExample text.",
   confidence: 92,
-  provider: "claude",
-  model: "claude-sonnet-4-5",
+  provider: "example-provider",
+  model: "example-model",
   imageFileName: "scan.jpg",
 });
-const text = JSON.stringify(file);
+const json = JSON.stringify(file);
 
-// Read
-const result = parseScanFile(JSON.parse(text));
+// JSON syntax errors and decoded-document validation are separate boundaries.
+let decoded: unknown;
+try {
+  decoded = JSON.parse(json);
+} catch {
+  throw new Error("Invalid JSON syntax");
+}
+const result = parseScanFile(decoded);
 if (result.ok) {
-  console.log(scanTitle(result.file, "Untitled scan"));
+  console.log(scanTitle(result.file, "Untitled"), result.file.summary);
 } else {
-  console.error(result.kind, result.message); // "schema" or "unsupported_version"
+  console.log(result.kind, result.message);
 }
 ```
 
-## File format
+## Format v1
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `version` | `1` | Yes | `"1"` is also read as `1`. |
-| `createdAt` | string | Yes | UTC ISO datetime, e.g. `2026-10-21T10:30:00.000Z`. |
-| `markdown` | string | Yes | The transcription, kept as is. |
-| `confidence` | integer 0-100 | Yes | Fractions (`0.9`) read as percentages (`90`); values are rounded and clamped. |
-| `provider` | string | Yes | Any non-blank name. |
-| `model` | string | Yes | |
-| `imageFileName` | string | Yes | Image file name in the same folder. |
-| `title` | string | No | Short page title. Written with at most 80 characters. |
-| `summary` | string | No | One-sentence summary. Written with at most 200 characters. |
-| `synced` | boolean | No | Plugin bookkeeping. Read as `false` when missing. |
-
-Reading is forgiving where it is safe: unknown keys are dropped, and a missing or malformed `title` or `summary` is treated as absent.
-
-## API
-
-| Export | Purpose |
+| Field | Contract |
 | --- | --- |
-| `createScanFile(input)` | Build a valid, JSON-ready scan file. Throws on invalid input. |
-| `parseScanFile(raw)` | Validate a decoded JSON value. Returns `{ ok: true, file }` or `{ ok: false, kind, message }`. |
-| `scanFileSchema` | The Zod schema behind `parseScanFile`. |
-| `SCAN_FILE_VERSION` | The version writers emit (`1`). |
-| `SUPPORTED_SCAN_FILE_VERSIONS` | Versions readers accept. |
-| `scanTitle(file, fallback)` | The file's title, or one derived from its markdown. |
-| `scanSummary(file)` | The file's summary, or `undefined`. |
-| `deriveTitle(markdown, fallback)` | First heading, else first line (60 characters), else `fallback`. |
-| `cleanMarkdownPreview(markdown)` | Plain-text preview of markdown, at most 200 characters. |
-| `imageFileNameFor(file, options?)` | The image that belongs to a scan file. |
-| `scanBaseName(fileName)` | File name without its scan extension. |
-| `isScanImageFileName(name)` | Whether a name is a scan image. |
-| `IMAGE_EXTENSIONS` | `.jpg`, `.jpeg`, `.png`. |
+| `version` | Writer emits `1`; reader accepts `1` or `"1"`. |
+| `createdAt` | Valid calendar date with four-digit year, uppercase `T`/`Z`, and seconds: `YYYY-MM-DDTHH:mm:ss[.fraction]Z`. Offsets, leap seconds, and hour 24 are rejected. String precision is preserved; `Date` inputs use `toISOString()`. |
+| `markdown` | Required string, preserved verbatim; empty is allowed. |
+| `confidence` | Required finite number. Both boundaries multiply values strictly between 0 and 1 by 100, clamp to [0, 100], and round to an integer. Exactly `1` means **1**, while `0.995` means 100; `0.145` rounds to 15. Decimal scaling noise is corrected before rounding. |
+| `provider` | Required nonblank string; whitespace is preserved. Names are unrestricted. |
+| `model` | Required string, including empty. |
+| `imageFileName` | Required string. Safe names have a nonempty stem and `.jpg`, `.jpeg`, or `.png` extension, case-sensitive. Slashes, backslashes, `..` anywhere, colons (including drive/URI prefixes), and Unicode control characters are forbidden. Writer rejects unsafe names; reader replaces them with `""` while retaining the scan. |
+| `synced` | Reader preserves booleans; missing or non-boolean values become `false`. Writer omits it. |
+| `title`, `summary` | Optional trimmed strings. Reader ignores non-strings and blanks and preserves overlong strings. Writer rejects non-strings and caps title/summary at 80/200 Unicode code points, including `…`, without splitting a grapheme. A partial word may be removed within 15 code points of the cut. Internal whitespace and sentence count are not normalized or validated. |
 
-Types: `ScanFile`, `ScanFileWrite`, `CreateScanFileInput`, `ParseScanFileResult`, `ImagePairingOptions`.
+Unknown keys are stripped. Parsed output is a normalized view, **not a lossless rewrite**: preserve unknown fields separately when editing a document. Optional reader metadata can be an own key with `undefined`; writer output omits absent metadata. The writer throws a Zod validation error for invalid fields, or `RangeError` for an invalid `Date`.
 
-## Test fixtures
+`unsupported_version` requires a canonical integer version from 2 through 999999999 (number or decimal string without leading zeroes), plus a string `markdown` or `createdAt` field. It takes precedence over other field errors. Other version values and unrelated objects produce `schema`. Preserve unsupported documents until a compatible reader is available; error prose is not a structured field API.
 
-The package ships sample files in `fixtures/`. `fixtures/manifest.json` lists each file with its expected result (`ok`, `schema` or `unsupported_version`), so readers can test against the same cases:
+## Exports
+
+- `SCAN_FILE_VERSION`: `1`, independent of the npm package version.
+- `createScanFile(input)`: produces `Omit<ScanFile, "synced">`.
+- `parseScanFile(decoded)`: returns `ParseScanFileResult`, with `ok: true` and `file`, or `ok: false`, `kind`, and `message`.
+- Types: `ScanFile`, `CreateScanFileInput`, `ParseScanFileResult`.
+- `IMAGE_EXTENSIONS`: `.jpg`, `.jpeg`, `.png`, in pairing precedence order.
+- `isScanImageFileName(name)`: validates the safe image basename rule above.
+- `scanBaseName(name)`: removes one trailing, case-sensitive `.json`, `.jpg`, `.jpeg`, or `.png`; it does not validate paths.
+- `imageFileNameFor(file, options?)`: returns a safe image name or `undefined`. Without options, uses the safe explicit reference. With `{ jsonFileName, availableFileNames }`, prefers a listed safe reference, then a listed image with the JSON basename in extension precedence order. Comparisons are exact and case-sensitive.
+- `scanTitle(file, fallback)`: uses a nonblank trimmed stored title, without a length cap. Otherwise selects the first nonempty cleaned H1–H6 or setext heading outside fenced/indented code (200 code-point cap), then the first nonempty cleaned line (60 code-point cap), then the supplied fallback unchanged. Cuts preserve graphemes. LF, CRLF, and CR are supported.
+
+Title derivation is a bounded Markdown heuristic: it handles basic emphasis, escapes, code spans, inline links/images, quotes, lists, and one-character task statuses. It scans the document once and cleans at most 4096 code points of each candidate line; it is not a full Markdown renderer.
+
+```ts
+import { imageFileNameFor } from "@papersync/scan-format";
+const name = imageFileNameFor({ imageFileName: "" }, {
+  jsonFileName: "scan.json",
+  availableFileNames: ["scan.png", "scan.jpeg"],
+}); // "scan.jpeg"
+```
+
+## Fixtures and development
+
+Node tooling can resolve the public fixture paths:
 
 ```js
-const manifestUrl = new URL("../fixtures/manifest.json", import.meta.resolve("@papersync/scan-format"));
+import { readFileSync } from "node:fs";
+const url = new URL(import.meta.resolve("@papersync/scan-format/fixtures/manifest.json"));
+const manifest = JSON.parse(readFileSync(url, "utf8"));
 ```
 
-## Development
+The manifest is an array of `{ file, expected, reason, output? }`. `expected` is `ok`, `schema`, or `unsupported_version`. Every `ok` case specifies the complete JSON-serializable normalized `output`. Each `file` is relative to the manifest and also resolves through `@papersync/scan-format/fixtures/<file>`.
 
-```sh
-npm ci
-npm run check   # lint, type check, build, tests
-```
+Run `npm ci`, `npm run check`, and `npm run check:pack`. Checks cover lint, types, behavior, 100% coverage, clean builds, the exact tarball file list, installed ESM/types, and fixture resolution with both minimum and locked Zod versions. Builds remove `dist`; published JavaScript contains no comments or source maps, and declarations retain JSDoc.
 
-Tests must keep 100% line, branch, function and statement coverage. CI fails below that.
+Persisted format versions describe wire interpretation. npm API removals, normalization changes, or runtime/peer support changes can require coordinated upgrades without changing the persisted version. Incompatible changes during 0.x use the next minor; compatible fixes use patches. Adding an optional field does not make parsing/reserializing lossless.
 
-## Versioning
-
-- Patch: fixes that keep the format.
-- Minor: new optional fields.
-- Major: anything an existing reader would reject, together with a new `version` number.
-
-See [RELEASING.md](RELEASING.md) to publish a version.
-
-## License
-
-MIT
+[Release guide](https://github.com/Papersync/scan-format/blob/main/RELEASING.md). MIT licensed.
