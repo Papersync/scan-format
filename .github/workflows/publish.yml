@@ -2,18 +2,77 @@ name: Publish
 on: workflow_dispatch
 permissions:
   contents: read
-  id-token: write
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
 jobs:
-  diagnose:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      artifact-id: ${{ steps.artifact.outputs.artifact-id }}
+      artifact-digest: ${{ steps.artifact.outputs.artifact-digest }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
-      - run: npm install --global npm@latest && npm --version
-      - run: npm ci && npm run build
-      - name: Stage publish of an existing version (must be rejected; shows the OIDC exchange result)
-        run: npm stage publish --provenance --access public --loglevel verbose 2>&1 | grep -i -E "oidc|stage|exchange|E4[0-9][0-9]|error" | grep -v -i "token\":" || true
+          cache: npm
+      - name: Verify release tag and main ancestry
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const {version} = JSON.parse(fs.readFileSync("package.json", "utf8")); if (process.env.RELEASE_TAG !== "v" + version) throw new Error("Release tag must match package version");'
+          git merge-base --is-ancestor HEAD origin/main
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - run: npm audit --include=dev --audit-level=high
+      - run: npm run check
+      - run: npm run check:pack
+      - name: Prepare pinned publishing CLI
+        run: npm pack npm@11.9.0 --ignore-scripts --pack-destination .pack
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        id: artifact
+        with:
+          name: release-package
+          path: |
+            .pack/papersync-scan-format-*.tgz
+            .pack/npm-11.9.0.tgz
+            .pack/SHA256SUMS
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - name: Verify and publish the built tarball
+        env:
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ needs.build.outputs.artifact-digest }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NODE_BIN=$(find "$RUNNER_TOOL_CACHE/node" -path '*/24.*/x64/bin/node' -type f | sort -V | tail -n 1)
+          test -n "$NODE_BIN" || { echo 'Node 24 is required in the runner tool cache'; exit 1; }
+          artifact_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"
+          curl --fail --silent --show-error -H "Authorization: Bearer $GH_TOKEN" "$artifact_url" --dump-header "$RUNNER_TEMP/artifact-headers" --output /dev/null
+          artifact_location=$(tr -d '\r' < "$RUNNER_TEMP/artifact-headers" | sed -n 's/^[Ll]ocation: //p')
+          test -n "$artifact_location"
+          curl --fail --silent --show-error "$artifact_location" -o "$RUNNER_TEMP/release.zip"
+          echo "$ARTIFACT_DIGEST  $RUNNER_TEMP/release.zip" | sha256sum --check --strict
+          mkdir "$RUNNER_TEMP/release" "$RUNNER_TEMP/npm-cli"
+          unzip -q "$RUNNER_TEMP/release.zip" -d "$RUNNER_TEMP/release"
+          cd "$RUNNER_TEMP/release"
+          sha256sum --check --strict SHA256SUMS
+          tar -xzf npm-11.9.0.tgz -C "$RUNNER_TEMP/npm-cli"
+          "$NODE_BIN" "$RUNNER_TEMP/npm-cli/package/bin/npm-cli.js" publish ./papersync-scan-format-*.tgz --ignore-scripts --provenance --access public
