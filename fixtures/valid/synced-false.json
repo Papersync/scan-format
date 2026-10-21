@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "createdAt": "2026-10-21T10:30:00.000Z",
+  "markdown": "# A paper note\n\nKeep this scan.",
+  "confidence": 72,
+  "provider": "claude",
+  "model": "example-model",
+  "imageFileName": "scan.jpg",
+  "synced": false
+}

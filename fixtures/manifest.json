@@ -1,0 +1,207 @@
+[
+  {
+    "file": "valid/minimal-v1.json",
+    "expected": "ok",
+    "reason": "All seven v1 fields; no optional metadata."
+  },
+  {
+    "file": "valid/title-summary.json",
+    "expected": "ok",
+    "reason": "Metadata is trimmed on read."
+  },
+  {
+    "file": "valid/string-version.json",
+    "expected": "ok",
+    "reason": "String v1 normalizes to number 1."
+  },
+  {
+    "file": "valid/synced-true.json",
+    "expected": "ok",
+    "reason": "Plugin bookkeeping may mark a scan as synced."
+  },
+  {
+    "file": "valid/synced-false.json",
+    "expected": "ok",
+    "reason": "Explicit false is accepted."
+  },
+  {
+    "file": "valid/png-image.json",
+    "expected": "ok",
+    "reason": "PNG images are supported."
+  },
+  {
+    "file": "valid/jpeg-image.json",
+    "expected": "ok",
+    "reason": "JPEG long extension is supported."
+  },
+  {
+    "file": "valid/unknown-key.json",
+    "expected": "ok",
+    "reason": "Unknown keys are stripped on read."
+  },
+  {
+    "file": "valid/future-provider.json",
+    "expected": "ok",
+    "reason": "Provider names stay open to newer writers."
+  },
+  {
+    "file": "valid/empty-metadata.json",
+    "expected": "ok",
+    "reason": "Blank optional metadata becomes absent."
+  },
+  {
+    "file": "valid/long-metadata.json",
+    "expected": "ok",
+    "reason": "Reader never rejects metadata for length."
+  },
+  {
+    "file": "valid/empty-content.json",
+    "expected": "ok",
+    "reason": "These strings remain unconstrained for v1 compatibility."
+  },
+  {
+    "file": "valid/confidence-zero.json",
+    "expected": "ok",
+    "reason": "Inclusive lower confidence bound."
+  },
+  {
+    "file": "valid/confidence-hundred.json",
+    "expected": "ok",
+    "reason": "Inclusive upper confidence bound."
+  },
+  {
+    "file": "invalid/bad-created-at.json",
+    "expected": "schema",
+    "reason": "Creation time must be an ISO datetime."
+  },
+  {
+    "file": "invalid/date-only.json",
+    "expected": "schema",
+    "reason": "A date without time is not a datetime."
+  },
+  {
+    "file": "invalid/offset-datetime.json",
+    "expected": "schema",
+    "reason": "Matches the plugin UTC-only z.iso.datetime rule."
+  },
+  {
+    "file": "invalid/impossible-date.json",
+    "expected": "schema",
+    "reason": "Impossible calendar dates are rejected."
+  },
+  {
+    "file": "valid/confidence-101.json",
+    "expected": "ok",
+    "reason": "Finite confidence above 100 is clamped to 100.",
+    "normalized": {
+      "confidence": 100
+    }
+  },
+  {
+    "file": "valid/confidence-fraction.json",
+    "expected": "ok",
+    "reason": "Finite decimal confidence is rounded from 72.5 to 73.",
+    "normalized": {
+      "confidence": 73
+    }
+  },
+  {
+    "file": "valid/confidence-negative.json",
+    "expected": "ok",
+    "reason": "Finite negative confidence is clamped to 0.",
+    "normalized": {
+      "confidence": 0
+    }
+  },
+  {
+    "file": "invalid/empty-provider.json",
+    "expected": "schema",
+    "reason": "Provider must be non-empty."
+  },
+  {
+    "file": "invalid/blank-provider.json",
+    "expected": "schema",
+    "reason": "Whitespace is not a provider name."
+  },
+  {
+    "file": "invalid/bad-synced.json",
+    "expected": "schema",
+    "reason": "Bookkeeping must be boolean when present."
+  },
+  {
+    "file": "valid/bad-title.json",
+    "expected": "ok",
+    "reason": "Non-string optional title is ignored; the scan remains readable.",
+    "absent": [
+      "title"
+    ]
+  },
+  {
+    "file": "valid/null-summary.json",
+    "expected": "ok",
+    "reason": "Null optional summary is ignored; the scan remains readable.",
+    "absent": [
+      "summary"
+    ]
+  },
+  {
+    "file": "invalid/version-2.json",
+    "expected": "unsupported_version",
+    "reason": "A future version needs a reader update."
+  },
+  {
+    "file": "invalid/string-version-2.json",
+    "expected": "unsupported_version",
+    "reason": "Unknown string versions need a reader update."
+  },
+  {
+    "file": "invalid/noncanonical-version.json",
+    "expected": "unsupported_version",
+    "reason": "Only exact 1 or string 1 identifies v1."
+  },
+  {
+    "file": "invalid/bad-version-type.json",
+    "expected": "schema",
+    "reason": "Version must be a string or number."
+  },
+  {
+    "file": "invalid/missing-markdown.json",
+    "expected": "schema",
+    "reason": "markdown is required."
+  },
+  {
+    "file": "invalid/missing-version.json",
+    "expected": "schema",
+    "reason": "version is required."
+  },
+  {
+    "file": "valid/confidence-tenths.json",
+    "expected": "ok",
+    "reason": "Fractional confidence 0.9 is normalized to 90.",
+    "normalized": {
+      "confidence": 90
+    }
+  },
+  {
+    "file": "valid/confidence-one.json",
+    "expected": "ok",
+    "reason": "Exactly 1 is a percentage, not a fraction.",
+    "normalized": {
+      "confidence": 1
+    }
+  },
+  {
+    "file": "valid/non-string-metadata.json",
+    "expected": "ok",
+    "reason": "Object and array optional metadata are ignored.",
+    "absent": [
+      "title",
+      "summary"
+    ]
+  },
+  {
+    "file": "invalid/confidence-string.json",
+    "expected": "schema",
+    "reason": "Numeric strings are not accepted as confidence."
+  }
+]
